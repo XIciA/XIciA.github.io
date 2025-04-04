@@ -564,7 +564,7 @@ except subprocess.CalledProcessError as e:
     print(f"Error running command: {e}")
 ```
 ## 提交草稿功能
-**publish draft**：
+**create draft**：
 ```
 import subprocess
 import os
@@ -603,89 +603,6 @@ except subprocess.CalledProcessError as e:
     # 如果命令执行失败，打印错误信息
     print(f"Error running command: {e}")
 ```
-
-
----
-
-# 在新电脑上部署 Hexo 博客
-如果换了一台新电脑，想要继续管理 Hexo 博客，可以按照以下步骤操作。本节假设你已完成初次部署，源文件托管在 GitHub 的 `hexo` 分支。
-
-## 安装环境
-需在新电脑上安装以下**Git**、**Node.js**、**Hexo CLI**（与初次部署相同，详见“操作步骤”中的“安装 Git”、“安装 Node.js”和“安装 Hexo”），运行以下命令确保都返回版本号：
-```
-git --version
-node -v
-npm -v
-hexo -v
-```
-
-
-## 配置 Git SSH
-+ 配置 Git 全局用户信息：
-```
-git config --global user.name "yourname"
-git config --global user.email "youremail"
-```
-+ 检查信息:
-```
-git config user.name
-git config user.email
-```
-+ 创建ssh:
-```
-ssh-keygen -t rsa -C "youremail"
-```
-
-+ 在GitHub的setting中，找到SSH keys的设置选项，点击New SSH key
-把你的id_rsa.pub里面的信息复制进去。
-
-
-+ 测试连接：
- ```
-ssh -T git@github.com
- ```
-
-## 拉取博客源文件
-+ 选择工作目录并克隆仓库：
- ```
- git clone git@github.com:XIciA/XIciA.github.io.git
- ```
-
-
-+ 安装项目依赖： 如果目录中有 node_modules 文件夹，建议清理并重新安装，以确保依赖与当前 Node.js 版本兼容，在 XIciA.github.io 目录下运行：
-```
-rm -rf node_modules
-npm install
-```
-
-
-+ 安装deploy-git：也就是部署的命令,这样你才能用命令部署到GitHub。
-```
-  npm install hexo-deployer-git --save
-```
-
-+ 确保 _config.yml 中的 deploy 配置正确：
-```
-deploy:
-  type: git
-  repo: git@github.com:XIciA/XIciA.github.io.git
-  branch: master
-```
-
-
-## 快捷使用
-
-+ 将博客更新到 GitHub Pages：：
-```
-hexo clean        # 清理旧文件
-hexo generate     # 重新生成
-hexo deploy       # 部署到 GitHub
-```
-
-或者将三个python脚本保存在本地，修改相应路径即可正常使用。
-
-
-
 
 ---
 # 一点感受
