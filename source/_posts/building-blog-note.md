@@ -678,11 +678,21 @@ deploy:
 + 将博客更新到 GitHub Pages：：
 ```
 hexo clean        # 清理旧文件
-hexo generate     # 重新生成
+hexo generate     # 生成静态文件
 hexo deploy       # 部署到 GitHub
 ```
+部署后访问 `http://XIciA.github.io`或`isvapor.top` 检查结果。
 
-或者将三个python脚本保存在本地，修改相应路径即可正常使用。
+
++ 同步源文件
+```
+git add .                                  #添加更改
+git commit -m "{commit_message}"           #提交更改
+git push                                   #推送到远程仓库
+git log                                    #查看提交历史
+```
+
++ 或者将三个python脚本保存在本地，修改相应路径即可正常使用。
 
 
 
