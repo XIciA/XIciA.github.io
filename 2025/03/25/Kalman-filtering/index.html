@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+
+    
+
+    
+    <title>卡尔曼滤波及其扩展 | My Blog</title>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+    <meta name="keywords" content="算法" />
+    
+    <meta name="description" content="卡尔曼滤波（Kalman Filter, KF）及其扩展版本——扩展卡尔曼滤波（Extended Kalman Filter, EKF）和无迹卡尔曼滤波（Unscented Kalman Filter, UKF）——是用于动态系统状态估计的经典方法。本笔记将详细介绍这三种滤波器的原理、数学推导和算法流程。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="卡尔曼滤波及其扩展">
+<meta property="og:url" content="http://example.com/2025/03/25/Kalman-filtering/index.html">
+<meta property="og:site_name" content="My Blog">
+<meta property="og:description" content="卡尔曼滤波（Kalman Filter, KF）及其扩展版本——扩展卡尔曼滤波（Extended Kalman Filter, EKF）和无迹卡尔曼滤波（Unscented Kalman Filter, UKF）——是用于动态系统状态估计的经典方法。本笔记将详细介绍这三种滤波器的原理、数学推导和算法流程。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://vaporfigurebed.oss-cn-beijing.aliyuncs.com/blogimg/e1666d3d112f034387870584730004b.png">
+<meta property="article:published_time" content="2025-03-25T15:00:11.000Z">
+<meta property="article:modified_time" content="2025-04-21T10:49:06.081Z">
+<meta property="article:author" content="Vapor">
+<meta property="article:tag" content="算法">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://vaporfigurebed.oss-cn-beijing.aliyuncs.com/blogimg/e1666d3d112f034387870584730004b.png">
+    
+
+    
+
+    
+
+    
+<link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/libs/titillium-web/styles.css">
+
+    
+<link rel="stylesheet" href="/libs/source-code-pro/styles.css">
+
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+
+    
+<script src="/libs/jquery/3.5.0/jquery.min.js"></script>
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/lightgallery/css/lightgallery.min.css">
+
+    
+    
+        
+<link rel="stylesheet" href="/libs/justified-gallery/justifiedGallery.min.css">
+
+    
+    
+    
+    
+
+
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body>
+    <div id="wrap">
+        <header id="header">
+    <div id="header-outer" class="outer">
+        <div class="container">
+            <div class="container-inner">
+                <div id="header-title">
+                    <h1 class="logo-wrap">
+                        <a href="/" class="logo"></a>
+                    </h1>
+                    
+                </div>
+                <div id="header-inner" class="nav-container">
+                    <a id="main-nav-toggle" class="nav-icon fa fa-bars"></a>
+                    <div class="nav-container-inner">
+                        <ul id="main-nav">
+                            
+                                <li class="main-nav-list-item" >
+                                    <a class="main-nav-list-link" href="/">主页</a>
+                                </li>
+                            
+                                    <ul class="main-nav-list"><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/%E5%AD%A6%E4%B9%A0/">学习</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a></li><li class="main-nav-list-item"><a class="main-nav-list-link" href="/categories/%E7%94%9F%E6%B4%BB/">生活</a></li></ul>
+                                
+                                <li class="main-nav-list-item" >
+                                    <a class="main-nav-list-link" href="/about/index.html">关于</a>
+                                </li>
+                            
+                        </ul>
+                        <nav id="sub-nav">
+                            <div id="search-form-wrap">
+
+    <form class="search-form">
+        <input type="text" class="ins-search-input search-form-input" placeholder="搜索" />
+        <button type="submit" class="search-form-submit"></button>
+    </form>
+    <div class="ins-search">
+    <div class="ins-search-mask"></div>
+    <div class="ins-search-container">
+        <div class="ins-input-wrapper">
+            <input type="text" class="ins-search-input" placeholder="想要查找什么..." />
+            <span class="ins-close ins-selectable"><i class="fa fa-times-circle"></i></span>
+        </div>
+        <div class="ins-section-wrapper">
+            <div class="ins-section-container"></div>
+        </div>
+    </div>
+</div>
+<script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+</div>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+        <div class="container">
+            <div class="main-body container-inner">
+                <div class="main-body-inner">
+                    <section id="main">
+                        <div class="main-body-header">
+    <h1 class="header">
+    
+    <a class="page-title-link" href="/categories/%E5%AD%A6%E4%B9%A0/">学习</a>
+    </h1>
+</div>
+
+                        <div class="main-body-content">
+                            <article id="post-Kalman-filtering" class="article article-single article-type-post" itemscope itemprop="blogPost">
+    <div class="article-inner">
+        
+            <header class="article-header">
+                
+    
+        <h1 class="article-title" itemprop="name">
+        卡尔曼滤波及其扩展
+        </h1>
+    
+
+            </header>
+        
+        
+            <div class="article-meta">
+                
+  <div class="article-date">
+    <i class="fa fa-calendar"></i>
+    <a href="/2025/03/25/Kalman-filtering/" class="article-date">
+       <time datetime="2025-03-25T15:00:11.000Z" itemprop="datePublished">2025-03-25</time>
+    </a>
+  </div>
+
+
+<div class="article-date">
+  <i class="fa fa-calendar-plus-o"></i>
+  <a href="/2025/03/25/Kalman-filtering/" class="article-date">
+     <time datetime="2025-04-21T10:49:06.081Z" itemprop="dateModified">2025-04-21</time>
+  </a>
+</div>
+
+
+                
+
+                
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a>
+    </div>
+
+                
+
+                
+
+            </div>
+        
+        
+        <div class="article-entry" itemprop="articleBody">
+            
+
+            
+
+            
+
+            <hr>
+<p>卡尔曼滤波（Kalman Filter, KF）及其扩展版本——扩展卡尔曼滤波（Extended Kalman Filter, EKF）和无迹卡尔曼滤波（Unscented Kalman Filter, UKF）——是用于动态系统状态估计的经典方法。本笔记将详细介绍这三种滤波器的原理、数学推导和算法流程。</p>
+<span id="more"></span>
+<hr>
+<h1 id="基本卡尔曼滤波（KF）"><a href="#基本卡尔曼滤波（KF）" class="headerlink" title="基本卡尔曼滤波（KF）"></a>基本卡尔曼滤波（KF）</h1><h2 id="问题背景与基本假设"><a href="#问题背景与基本假设" class="headerlink" title="问题背景与基本假设"></a>问题背景与基本假设</h2><p>卡尔曼滤波的目标是估计一个动态系统的状态 $x_k$，该状态随时间 $ k $ 变化。由于我们无法直接观测 $ x_k $，只能通过含噪声的观测 $ z_k $ 间接获取状态信息。系统基于以下假设：</p>
+<ul>
+<li><strong>线性动态系统</strong>：状态转移和观测过程可以用线性方程描述。</li>
+<li><strong>高斯噪声</strong>：系统噪声和观测噪声均为零均值的高斯白噪声。</li>
+</ul>
+<p>系统的数学模型如下：</p>
+<h3 id="状态转移方程："><a href="#状态转移方程：" class="headerlink" title="状态转移方程："></a>状态转移方程：</h3><script type="math/tex; mode=display">
+x_k = A x_{k-1} + B u_{k-1} + w_{k-1}</script><ul>
+<li>$ x_k $：时刻 $ k $ 的<strong>真实状态向量</strong>（未知）。</li>
+<li>$ A $：<strong>状态转移矩阵</strong>，描述状态从 $ k-1 $ 到 $ k $ 的线性演化。</li>
+<li>$ B $：<strong>控制输入矩阵</strong>，将控制输入映射到状态空间。</li>
+<li>$ u_{k-1} $：<strong>控制输入向量</strong>，表示外部输入对系统的作用。</li>
+<li>$ w_{k-1} $：<strong>过程噪声</strong>，服从高斯分布 $ w_{k-1} \sim N(0, Q) $，其中 $ Q $ 为<strong>过程噪声协方差矩阵</strong>，描述过程噪声的不确定性。</li>
+</ul>
+<blockquote>
+<p> <strong>示例说明</strong></p>
+<p>假设一个简单的一维运动系统：物体在匀加速运动中，状态包括位置 $ p $ 和速度 $ v $，控制输入是加速度 $ a $。状态向量为 $ x_k = [p_k, v_k]^T $，控制输入为 $ u_k = a_k $。</p>
+<p>离散化后（时间步长为 $ \Delta t $）的状态转移方程为：</p>
+<script type="math/tex; mode=display">
+p_k = p_{k-1} + v_{k-1} \Delta t + \frac{1}{2} a_{k-1} \Delta t^2</script><script type="math/tex; mode=display">
+v_k = v_{k-1} + a_{k-1} \Delta t</script><p>写成矩阵形式：</p>
+<script type="math/tex; mode=display">
+x_k = \begin{bmatrix} p_k \\ v_k \end{bmatrix} = \begin{bmatrix} 1 & \Delta t \\ 0 & 1 \end{bmatrix} \begin{bmatrix} p_{k-1} \\ v_{k-1} \end{bmatrix} + \begin{bmatrix} \frac{1}{2} \Delta t^2 \\ \Delta t \end{bmatrix} a_{k-1} + w_{k-1}</script><ul>
+<li><p>状态转移矩阵$ A = \begin{bmatrix} 1 &amp; \Delta t \\ 0 &amp; 1 \end{bmatrix} $描述位置和速度的自然演化（即使没有加速度，位置仍随速度变化）。$ A $ 是系统的<strong>内在动力学模型</strong>，负责状态的自然演化。$ A x_{k-1} $ 表示无外部输入时的状态转移。</p>
+</li>
+<li><p>控制输入矩阵$ B = \begin{bmatrix} \frac{1}{2} \Delta t^2 \\ \Delta t \end{bmatrix} $将加速度 $ a_{k-1} $ 映射到位置和速度的变化。$ B $ 是<strong>外部控制的桥梁</strong>，将控制输入引入状态空间。$ B u_{k-1} $ 表示加速度对状态的贡献。</p>
+</li>
+</ul>
+</blockquote>
+<h3 id="观测方程："><a href="#观测方程：" class="headerlink" title="观测方程："></a>观测方程：</h3><script type="math/tex; mode=display">
+z_k = H x_k + v_k</script><ul>
+<li>$ z_k $：时刻 $ k $ 的<strong>观测向量</strong>，通过传感器获取。</li>
+<li>$ H $：<strong>观测矩阵</strong>，将真实状态映射到观测空间。</li>
+<li>$ v_k $：<strong>观测噪声</strong>，服从高斯分布 $ v_k \sim N(0, R) $，其中 $ R $ 为<strong>观测噪声协方差矩阵</strong>，描述观测噪声的不确定性。</li>
+</ul>
+<p><strong>目标</strong>：根据观测 $ z_k $ 和先前的估计，递归地计算状态 $ x_k $ 的最佳估计。??</p>
+<h2 id="概率框架与贝叶斯估计"><a href="#概率框架与贝叶斯估计" class="headerlink" title="概率框架与贝叶斯估计"></a>概率框架与贝叶斯估计</h2><p>卡尔曼滤波基于贝叶斯估计，利用先验信息和观测数据更新状态估计。核心是计算状态 $ x_k $ 的<strong>后验概率分布</strong> $ p(x_k | z_{1:k}) $，其中 $ z_{1:k} $ 表示从时刻 1 到 $ k $ 的所有观测。</p>
+<h3 id="贝叶斯定理（Bayes’-Theorem）"><a href="#贝叶斯定理（Bayes’-Theorem）" class="headerlink" title="贝叶斯定理（Bayes’ Theorem）"></a>贝叶斯定理（Bayes’ Theorem）</h3><p>贝叶斯定理是概率论中的一个基本公式，用于在有新证据时更新某一事件发生的概率。其核心思想是：<strong>通过已知的条件概率反推出感兴趣的概率</strong>。</p>
+<ol>
+<li><strong>条件概率的定义</strong></li>
+</ol>
+<p>设 $A$、$B$ 是两个概率大于 0 的事件，定义条件概率为：</p>
+<script type="math/tex; mode=display">
+P(A \mid B) = \frac{P(A \cap B)}{P(B)} \tag{1}</script><p>同理：</p>
+<script type="math/tex; mode=display">
+P(B \mid A) = \frac{P(A \cap B)}{P(A)} \tag{2}</script><p>两式右边的分子都是事件 $A$ 与 $B$ 同时发生的概率 $P(A \cap B)$。</p>
+<ol>
+<li><strong>贝叶斯定理的推导过程</strong></li>
+</ol>
+<p>从 (2) 式变形，解出联合概率：</p>
+<script type="math/tex; mode=display">
+P(A \cap B) = P(B \mid A) \cdot P(A)</script><p>代入式 (1) 中，得到：</p>
+<script type="math/tex; mode=display">
+P(A \mid B) = \frac{P(B \mid A) \cdot P(A)}{P(B)}</script><p>这就是<strong>贝叶斯定理的标准形式</strong>，其中：</p>
+<ul>
+<li>$ P(A \mid B) $：<strong>后验概率</strong>（posterior），即在已知 $B$ 发生的前提下，事件 $A$ 发生的概率；</li>
+<li>$ P(B \mid A) $：<strong>似然度</strong>（likelihood），即在 $A$ 已发生的前提下，$B$ 发生的概率；</li>
+<li>$ P(A) $：<strong>先验概率</strong>（prior），即在未观察到 $B$ 前，事件 $A$ 的概率；</li>
+<li>$ P(B) $：<strong>边际概率</strong>（marginal），即事件 $B$ 发生的总概率。</li>
+</ul>
+<h3 id="贝叶斯估计在卡尔曼滤波中的应用"><a href="#贝叶斯估计在卡尔曼滤波中的应用" class="headerlink" title="贝叶斯估计在卡尔曼滤波中的应用"></a>贝叶斯估计在卡尔曼滤波中的应用</h3><p>根据贝叶斯定理：</p>
+<script type="math/tex; mode=display">
+p(x_k | z_{1:k}) = \frac{p(z_k | x_k) p(x_k | z_{1:k-1})}{p(z_k | z_{1:k-1})}</script><ul>
+<li>$p(x_k|z_{1:k})$：后验概率（posterior），表示在观测到 $z_{1:k}$ 后，状态 $x_k$ 的概率分布。</li>
+<li>$p(z_k|x_k)$：似然概率（likelihood），表示在状态 $x_k$ 下观测到 $z_k$ 的概率。</li>
+<li>$p(x_k|z_{1:k-1})$：先验概率（prior），表示在观测到 $z_k$ 之前，基于历史观测 $z_{1:k-1}$ 对状态 $x_k$ 的预测。</li>
+<li>$p(z_k|z_{1:k-1})$：归一化常数（evidence），表示观测 $z_k$ 的边缘概率，用于归一化后验概率。</li>
+</ul>
+<p>卡尔曼滤波通过以下两步实现贝叶斯估计：</p>
+<ol>
+<li><strong>预测（时间更新）</strong>：根据上一时刻的后验分布预测当前时刻的先验分布。</li>
+<li><strong>更新（测量更新）</strong>：利用贝叶斯定理结合观测更新为后验分布。</li>
+</ol>
+<h4 id="先验概率-p-x-k-z-1-k-1"><a href="#先验概率-p-x-k-z-1-k-1" class="headerlink" title="先验概率 $p(x_k | z_{1:k-1})$"></a>先验概率 $p(x_k | z_{1:k-1})$</h4><ul>
+<li><p><strong>贝叶斯定理中的部分</strong>：  </p>
+<script type="math/tex; mode=display">p(x_k | z_{1:k-1})</script></li>
+<li><p><strong>卡尔曼滤波中的对应公式</strong>：  </p>
+<script type="math/tex; mode=display">p(x_k | z_{1:k-1}) \sim N(\hat{x}_{k|k-1}, P_{k|k-1})</script><p>其中：  </p>
+<script type="math/tex; mode=display">\hat{x}_{k|k-1} = A \hat{x}_{k-1|k-1} + B u_{k-1}</script><script type="math/tex; mode=display">P_{k|k-1} = A P_{k-1|k-1} A^T + Q</script></li>
+</ul>
+<h4 id="似然概率-p-z-k-x-k"><a href="#似然概率-p-z-k-x-k" class="headerlink" title="似然概率 $p(z_k | x_k)$"></a>似然概率 $p(z_k | x_k)$</h4><ul>
+<li><p><strong>贝叶斯定理中的部分</strong>：  </p>
+<script type="math/tex; mode=display">p(z_k | x_k)</script></li>
+<li><p><strong>卡尔曼滤波中的对应公式</strong>：  </p>
+<script type="math/tex; mode=display">p(z_k | x_k) \sim N(H x_k, R)</script></li>
+</ul>
+<h4 id="归一化常数-p-z-k-z-1-k-1"><a href="#归一化常数-p-z-k-z-1-k-1" class="headerlink" title="归一化常数 $p(z_k | z_{1:k-1})$"></a>归一化常数 $p(z_k | z_{1:k-1})$</h4><ul>
+<li><p><strong>贝叶斯定理中的部分</strong>：  </p>
+<script type="math/tex; mode=display">p(z_k | z_{1:k-1})</script><script type="math/tex; mode=display">p(z_k | z_{1:k-1}) = \int p(z_k | x_k) p(x_k | z_{1:k-1}) dx_k</script></li>
+<li><p><strong>卡尔曼滤波中的对应公式</strong>：  </p>
+<script type="math/tex; mode=display">p(z_k | z_{1:k-1}) \sim N(H \hat{x}_{k|k-1}, H P_{k|k-1} H^T + R)</script><p>其中：  </p>
+<script type="math/tex; mode=display">S_k = H P_{k|k-1} H^T + R</script><script type="math/tex; mode=display">\tilde{y}_k = z_k - H \hat{x}_{k|k-1}</script></li>
+</ul>
+<h4 id="后验概率-p-x-k-z-1-k"><a href="#后验概率-p-x-k-z-1-k" class="headerlink" title="后验概率 $p(x_k | z_{1:k})$"></a>后验概率 $p(x_k | z_{1:k})$</h4><ul>
+<li><p><strong>贝叶斯定理中的部分</strong>：  </p>
+<script type="math/tex; mode=display">p(x_k | z_{1:k})</script></li>
+<li><p><strong>卡尔曼滤波中的对应公式</strong>：  </p>
+<script type="math/tex; mode=display">p(x_k | z_{1:k}) \sim N(\hat{x}_{k|k}, P_{k|k})</script><p>其中：  </p>
+<script type="math/tex; mode=display">K_k = P_{k|k-1} H^T S_k^{-1}</script><script type="math/tex; mode=display">\hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k \tilde{y}_k</script><script type="math/tex; mode=display">P_{k|k} = (I - K_k H) P_{k|k-1}</script></li>
+</ul>
+<blockquote>
+<p><strong>协方差</strong>与<strong>协方差矩阵</strong>：<br><strong>协方差</strong>是衡量两个随机变量之间线性相关性的统计量。对于随机变量 $ X $ 和 $ Y $，协方差定义为：</p>
+<script type="math/tex; mode=display">
+\text{Cov}(X, Y) = E[(X - E[X])(Y - E[Y])]</script><ul>
+<li>正协方差：$ X $ 和 $ Y $ 趋于同方向变化。</li>
+<li>负协方差：$ X $ 和 $ Y $ 趋于反方向变化。</li>
+<li>协方差为零：$ X $ 和 $ Y $ 无线性相关性。</li>
+</ul>
+<p><strong>协方差矩阵</strong>是协方差的推广，适用于随机向量。对于 $ n $ 维随机向量 $ \mathbf{x} = [x_1, x_2, \dots, x_n]^T $，协方差矩阵 $ \Sigma $ 为：</p>
+<script type="math/tex; mode=display">
+\Sigma = E[(\mathbf{x} - E[\mathbf{x}])(\mathbf{x} - E[\mathbf{x}])^T]</script><ul>
+<li>对角线元素 $ \Sigma_{ii} = \text{Var}(x_i) $：表示 $ x_i $ 的方差。</li>
+<li>非对角线元素 $ \Sigma_{ij} = \text{Cov}(x_i, x_j) $：表示 $ x_i $ 和 $ x_j $ 的协方差。</li>
+</ul>
+<p>在卡尔曼滤波中，协方差矩阵（如 $ P_{k|k-1} $ 和 $ P_{k|k} $）描述状态估计的不确定性，是算法的核心组成部分。</p>
+</blockquote>
+<h2 id="预测步骤（时间更新）"><a href="#预测步骤（时间更新）" class="headerlink" title="预测步骤（时间更新）"></a>预测步骤（时间更新）</h2><h3 id="状态预测"><a href="#状态预测" class="headerlink" title="状态预测"></a>状态预测</h3><p>根据状态转移方程：</p>
+<script type="math/tex; mode=display">
+x_k = A x_{k-1} + B u_{k-1} + w_{k-1}</script><p>由于 $ w_{k-1} $ 是零均值高斯噪声，取期望得到<strong>先验状态估计</strong>：</p>
+<script type="math/tex; mode=display">
+\hat{x}_{k|k-1} = E[x_k | z_{1:k-1}] = A \hat{x}_{k-1|k-1} + B u_{k-1}</script><ul>
+<li>$ \hat{x}_{k-1|k-1} $：时刻 $ k-1 $ 的<strong>后验状态估计</strong>，上一时刻更新后的估计值。</li>
+</ul>
+<h3 id="协方差预测"><a href="#协方差预测" class="headerlink" title="协方差预测"></a>协方差预测</h3><p>定义<strong>先验误差</strong>为：</p>
+<script type="math/tex; mode=display">
+e_{k|k-1} = x_k - \hat{x}_{k|k-1}</script><p>代入状态转移方程：</p>
+<script type="math/tex; mode=display">
+e_{k|k-1} = x_k - \hat{x}_{k|k-1} = A x_{k-1} + B u_{k-1} + w_{k-1} - (A \hat{x}_{k-1|k-1} + B u_{k-1})</script><script type="math/tex; mode=display">
+= A (x_{k-1} - \hat{x}_{k-1|k-1}) + w_{k-1} = A e_{k-1|k-1} + w_{k-1}</script><ul>
+<li>$ e_{k-1|k-1} $：<strong>后验误差</strong>，即 $ x_{k-1} - \hat{x}_{k-1|k-1} $。</li>
+</ul>
+<p><strong>先验协方差矩阵</strong> $ P_{k|k-1} $ 是先验误差的协方差：</p>
+<script type="math/tex; mode=display">
+P_{k|k-1} = E[e_{k|k-1} e_{k|k-1}^T]</script><p>展开：</p>
+<script type="math/tex; mode=display">
+e_{k|k-1} e_{k|k-1}^T = (A e_{k-1|k-1} + w_{k-1})(A e_{k-1|k-1} + w_{k-1})^T</script><script type="math/tex; mode=display">
+= A e_{k-1|k-1} e_{k-1|k-1}^T A^T + A e_{k-1|k-1} w_{k-1}^T + w_{k-1} e_{k-1|k-1}^T A^T + w_{k-1} w_{k-1}^T</script><p>取期望：</p>
+<script type="math/tex; mode=display">
+P_{k|k-1} = E[A e_{k-1|k-1} e_{k-1|k-1}^T A^T] + E[A e_{k-1|k-1} w_{k-1}^T] + E[w_{k-1} e_{k-1|k-1}^T A^T] + E[w_{k-1} w_{k-1}^T]</script><p>由于 $ e_{k-1|k-1} $ 是上一时刻的后验误差，与当前时刻的过程噪声 $ w_{k-1} $ 独立，且 $ E[w_{k-1}] = 0 $，交叉项为零：</p>
+<script type="math/tex; mode=display">
+E[A e_{k-1|k-1} w_{k-1}^T] = A E[e_{k-1|k-1}] E[w_{k-1}^T] = 0</script><script type="math/tex; mode=display">
+E[w_{k-1} e_{k-1|k-1}^T A^T] = E[w_{k-1}] E[e_{k-1|k-1}^T] A^T = 0</script><p>因此：</p>
+<script type="math/tex; mode=display">
+P_{k|k-1} = A E[e_{k-1|k-1} e_{k-1|k-1}^T] A^T + E[w_{k-1} w_{k-1}^T] = A P_{k-1|k-1} A^T + Q</script><h2 id="更新步骤（测量更新）"><a href="#更新步骤（测量更新）" class="headerlink" title="更新步骤（测量更新）"></a>更新步骤（测量更新）</h2><h3 id="观测残差"><a href="#观测残差" class="headerlink" title="观测残差"></a>观测残差</h3><p><strong>观测残差</strong>（或<strong>创新</strong>）是实际观测与预测观测之差：</p>
+<script type="math/tex; mode=display">
+\tilde{y}_k = z_k - H \hat{x}_{k|k-1}</script><p><strong>创新协方差</strong> $ S_k $ 是观测残差的协方差：</p>
+<script type="math/tex; mode=display">
+S_k = E[\tilde{y}_k \tilde{y}_k^T]</script><p>推导：</p>
+<script type="math/tex; mode=display">
+\tilde{y}_k = z_k - H \hat{x}_{k|k-1} = H x_k + v_k - H \hat{x}_{k|k-1} = H (x_k - \hat{x}_{k|k-1}) + v_k = H e_{k|k-1} + v_k</script><script type="math/tex; mode=display">
+S_k = E[(H e_{k|k-1} + v_k)(H e_{k|k-1} + v_k)^T]</script><script type="math/tex; mode=display">
+= E[H e_{k|k-1} e_{k|k-1}^T H^T + H e_{k|k-1} v_k^T + v_k e_{k|k-1}^T H^T + v_k v_k^T]</script><p>由于 $ e_{k|k-1} $ 和 $ v_k $ 独立，且 $ E[v_k] = 0 $：</p>
+<script type="math/tex; mode=display">
+E[H e_{k|k-1} v_k^T] = H E[e_{k|k-1}] E[v_k^T] = 0</script><script type="math/tex; mode=display">
+E[v_k e_{k|k-1}^T H^T] = E[v_k] E[e_{k|k-1}^T] H^T = 0</script><p>因此：</p>
+<script type="math/tex; mode=display">
+S_k = H E[e_{k|k-1} e_{k|k-1}^T] H^T + E[v_k v_k^T] = H P_{k|k-1} H^T + R</script><blockquote>
+<p>$ S_k $ 是以下两部分的综合：</p>
+<ol>
+<li><strong>先验预测的不确定性</strong>：$ H P_{k|k-1} H^T $ 表示先验状态估计的不确定性通过观测矩阵映射到观测空间。</li>
+<li><strong>观测噪声的不确定性</strong>：$ R $ 表示传感器本身的噪声特性。</li>
+</ol>
+</blockquote>
+<h3 id="卡尔曼增益"><a href="#卡尔曼增益" class="headerlink" title="卡尔曼增益"></a>卡尔曼增益</h3><p><strong>卡尔曼增益</strong> $ K_k $ 是先验估计和观测的权衡因子：</p>
+<script type="math/tex; mode=display">
+K_k = P_{k|k-1} H^T S_k^{-1}</script><p>它决定了观测残差对状态估计的修正程度。</p>
+<p>  <strong>卡尔曼增益的推导</strong><br>卡尔曼增益 $ K_k $ 是状态估计的关键，目标是通过最小化后验误差协方差得到最优估计。这里使用<strong>最小均方误差</strong>（MMSE）方法推导 $ K_k = P_{k|k-1} H^T S_k^{-1} $。</p>
+<p>后验状态估计定义为：</p>
+<script type="math/tex; mode=display">
+\hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k \tilde{y}_k</script><p>后验误差：</p>
+<script type="math/tex; mode=display">
+e_{k|k} = x_k - \hat{x}_{k|k} = (I - K_k H) e_{k|k-1} - K_k v_k</script><p>后验协方差：</p>
+<script type="math/tex; mode=display">
+P_{k|k} = E[e_{k|k} e_{k|k}^T] = (I - K_k H) P_{k|k-1} (I - K_k H)^T + K_k R K_k^T</script><p>目标是最小化 $ P_{k|k} $ 的迹（$\text{tr}(P_{k|k})$），对 $ K_k $ 求导：</p>
+<script type="math/tex; mode=display">
+\frac{\partial \text{tr}(P_{k|k})}{\partial K_k} = -2 (I - K_k H) P_{k|k-1} H^T + 2 K_k (H P_{k|k-1} H^T + R) = 0</script><p>解得：</p>
+<script type="math/tex; mode=display">
+K_k = P_{k|k-1} H^T (H P_{k|k-1} H^T + R)^{-1} = P_{k|k-1} H^T S_k^{-1}</script><h3 id="状态更新"><a href="#状态更新" class="headerlink" title="状态更新"></a>状态更新</h3><p><strong>后验状态估计</strong>通过先验估计加上残差的加权修正得到：</p>
+<script type="math/tex; mode=display">
+\hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k \tilde{y}_k</script><h3 id="协方差更新"><a href="#协方差更新" class="headerlink" title="协方差更新"></a>协方差更新</h3><p><strong>后验协方差矩阵</strong>表示更新后的不确定性：</p>
+<script type="math/tex; mode=display">
+P_{k|k} = E[(x_k - \hat{x}_{k|k})(x_k - \hat{x}_{k|k})^T]</script><p>代入 $ \hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k \tilde{y}_k $：</p>
+<script type="math/tex; mode=display">
+x_k - \hat{x}_{k|k} = x_k - (\hat{x}_{k|k-1} + K_k (z_k - H \hat{x}_{k|k-1}))</script><script type="math/tex; mode=display">
+= x_k - \hat{x}_{k|k-1} - K_k (H x_k + v_k - H \hat{x}_{k|k-1}) = (x_k - \hat{x}_{k|k-1}) - K_k H (x_k - \hat{x}_{k|k-1}) - K_k v_k</script><script type="math/tex; mode=display">
+= (I - K_k H) e_{k|k-1} - K_k v_k</script><p>计算协方差：</p>
+<script type="math/tex; mode=display">
+P_{k|k} = E[((I - K_k H) e_{k|k-1} - K_k v_k)((I - K_k H) e_{k|k-1} - K_k v_k)^T]</script><p>展开并利用 $ e_{k|k-1} $ 和 $ v_k $ 独立性，简化得：</p>
+<script type="math/tex; mode=display">
+P_{k|k} = (I - K_k H) P_{k|k-1}</script><h2 id="完整算法流程"><a href="#完整算法流程" class="headerlink" title="完整算法流程"></a>完整算法流程</h2><p><strong>初始化</strong>：</p>
+<ul>
+<li>初始状态估计：$ \hat{x}_{0|0} $</li>
+<li>初始协方差矩阵：$ P_{0|0} $</li>
+</ul>
+<p>对于每个时刻 $ k = 1, 2, \dots $：</p>
+<ol>
+<li><strong>预测</strong>：<ul>
+<li>$ \hat{x}_{k|k-1} = A \hat{x}_{k-1|k-1} + B u_{k-1} $</li>
+<li>$ P_{k|k-1} = A P_{k-1|k-1} A^T + Q $</li>
+</ul>
+</li>
+<li><strong>更新</strong>：<ul>
+<li>$ \tilde{y}_k = z_k - H \hat{x}_{k|k-1} $</li>
+<li>$ S_k = H P_{k|k-1} H^T + R $</li>
+<li>$ K_k = P_{k|k-1} H^T S_k^{-1} $</li>
+<li>$ \hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k \tilde{y}_k $</li>
+<li>$ P_{k|k} = (I - K_k H) P_{k|k-1} $</li>
+</ul>
+</li>
+</ol>
+<h2 id="强化理解"><a href="#强化理解" class="headerlink" title="强化理解"></a>强化理解</h2><h3 id="预测"><a href="#预测" class="headerlink" title="预测"></a><strong>预测</strong></h3><p>这一阶段利用系统模型从上一时刻的状态估计当前时刻的状态。</p>
+<ul>
+<li><p><strong>$ \hat{x}_{k|k-1} = A \hat{x}_{k-1|k-1} + B u_{k-1} $</strong>  </p>
+<ul>
+<li><strong>物理意义</strong>：<br>$ \hat{x}_{k|k-1} $ 是当前时刻的<strong>先验状态估计</strong>，表示在未使用当前测量数据之前，根据系统动态模型预测的状态。  <ul>
+<li><strong>$ A \hat{x}_{k-1|k-1} $</strong>：<br>通过状态转移矩阵 $ A $ 将上一时刻的最优状态 $ \hat{x}_{k-1|k-1} $（如位置、速度）映射到当前时刻。例如，若物体匀速运动，位置增加量为速度乘以时间间隔。  </li>
+<li><strong>$ B u_{k-1} $</strong>：<br>表示外部控制输入（如加速度、油门）对状态的影响，通过控制矩阵 $ B $ 映射到状态空间。若无控制输入，则此项为零。  </li>
+<li><strong>直观理解</strong>：<br>比如一辆车，上一秒位置是10米，速度是2米/秒，预测下一秒位置是12米（假设无加速度控制）。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>$ P_{k|k-1} = A P_{k-1|k-1} A^T + Q $</strong>  </p>
+<ul>
+<li><strong>物理意义</strong>：<br>$ P_{k|k-1} $ 是<strong>先验协方差矩阵</strong>，表示预测状态 $ \hat{x}_{k|k-1} $ 的不确定性。  <ul>
+<li><strong>$ A P_{k-1|k-1} A^T $</strong>：<br>将上一时刻的后验协方差 $ P_{k-1|k-1} $（上一时刻状态的不确定性）通过状态转移传播到当前时刻。不确定性可能因系统动态而放大或缩小。  </li>
+<li><strong>$ Q $</strong>：<br>过程噪声协方差，表示系统模型的不完美性（如风速变化、路面不平引起的随机扰动）。  </li>
+<li><strong>直观理解</strong>：<br>预测时间越长（或模型越不准），不确定性越大，$ P_{k|k-1} $ 的值会增加。例如，预测一辆车的未来位置时，风向变化会增加位置的不确定性。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="更新"><a href="#更新" class="headerlink" title="更新"></a><strong>更新</strong></h3><p>这一阶段利用当前测量数据修正预测值，得到更准确的状态估计。</p>
+<ul>
+<li><p><strong>$ \tilde{y}_k = z_k - H \hat{x}_{k|k-1} $</strong>  </p>
+<ul>
+<li><strong>物理意义</strong>：<br>$ \tilde{y}_k $ 是<strong>测量残差</strong>（或创新），表示实际测量值与预测测量值之间的偏差。  <ul>
+<li><strong>$ z_k $</strong>：<br>当前时刻的传感器测量值（如GPS报告的位置）。  </li>
+<li><strong>$ H \hat{x}_{k|k-1} $</strong>：<br>通过观测矩阵 $ H $ 将预测状态映射到测量空间的预期测量值。例如，若状态包括位置和速度，而传感器只测位置，则 $ H $ 提取位置部分。  </li>
+<li><strong>直观理解</strong>：<br>如果预测位置是12米，测量值是11.8米，残差 $ \tilde{y}_k = 11.8 - 12 = -0.2 $ 米，表示预测偏高。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>$ S_k = H P_{k|k-1} H^T + R $</strong>  </p>
+<ul>
+<li><strong>物理意义</strong>：<br>$ S_k $ 是<strong>测量残差的协方差矩阵</strong>，表示残差 $ \tilde{y}_k $ 的不确定性，综合了预测和测量的不可靠性。  <ul>
+<li><strong>$ H P_{k|k-1} H^T $</strong>：<br>预测状态的不确定性 $ P_{k|k-1} $ 在测量空间的投影，反映预测的可信度对残差的影响。  </li>
+<li><strong>$ R $</strong>：<br>测量噪声协方差，表示传感器测量的随机误差（如GPS的精度误差）。  </li>
+<li><strong>直观理解</strong>：<br>$ S_k $ 越大，说明残差受预测或测量噪声影响越大，可信度越低。例如，若GPS精度差，$ R $ 大，$ S_k $ 增加。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>$ K_k = P_{k|k-1} H^T S_k^{-1} $</strong>  </p>
+<ul>
+<li><strong>物理意义</strong>：<br>$ K_k $ 是<strong>卡尔曼增益</strong>，决定预测和测量在状态修正中的相对权重，反映了两者的可信度平衡。  <ul>
+<li><strong>$ P_{k|k-1} H^T $</strong>：<br>表示预测状态的不确定性如何影响测量空间。若 $ P_{k|k-1} $ 大（预测不可靠），$ K_k $ 倾向于更大。  </li>
+<li><strong>$ S_k^{-1} $</strong>：<br>残差协方差的逆。若 $ S_k $ 大（残差不可信），$ S_k^{-1} $ 小，$ K_k $ 减小。  </li>
+<li><strong>直观理解</strong>：<br>若预测位置不确定性高（$ P_{k|k-1} $ 大），而测量较可靠（$ R $ 小），$ K_k $ 接近1，更信任测量；反之，若测量噪声大，$ K_k $ 接近0，更信任预测。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>$ \hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k \tilde{y}_k $</strong>  </p>
+<ul>
+<li><strong>物理意义</strong>：<br>$ \hat{x}_{k|k} $ 是<strong>后验状态估计</strong>，结合预测和测量信息后的最优状态估计。  <ul>
+<li><strong>$ \hat{x}_{k|k-1} $</strong>：<br>先验状态估计，作为更新的起点。  </li>
+<li><strong>$ K_k \tilde{y}_k $</strong>：<br>根据卡尔曼增益和测量残差对预测值的修正量。  </li>
+<li><strong>直观理解</strong>：<br>预测位置12米，测量11.8米，若 $ K_k = 0.6 $，则 $ \hat{x}_{k|k} = 12 + 0.6 \cdot (11.8 - 12) = 11.88 $ 米，融合了两者的结果。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>$ P_{k|k} = (I - K_k H) P_{k|k-1} $</strong>  </p>
+<ul>
+<li><strong>物理意义</strong>：<br>$ P_{k|k} $ 是<strong>后验协方差矩阵</strong>，表示后验状态估计 $ \hat{x}_{k|k} $ 的不确定性。  <ul>
+<li><strong>$ (I - K_k H) $</strong>：<br>一个缩减因子，反映测量信息如何减少预测的不确定性。  </li>
+<li><strong>$ P_{k|k-1} $</strong>：<br>先验协方差，作为更新的基础。  </li>
+<li><strong>直观理解</strong>：<br>融合测量后，不确定性通常减小。例如，若 $ K_k $ 大（信任测量），$ P_{k|k} $ 显著小于 $ P_{k|k-1} $，表示状态估计更可信。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>KF 通过预测和更新递归优化状态估计，适用于<strong>线性高斯系统</strong>，具有高效性和最优性。</p>
+<hr>
+<h1 id="扩展卡尔曼滤波（EKF）"><a href="#扩展卡尔曼滤波（EKF）" class="headerlink" title="扩展卡尔曼滤波（EKF）"></a>扩展卡尔曼滤波（EKF）</h1><h2 id="问题背景与基本假设-1"><a href="#问题背景与基本假设-1" class="headerlink" title="问题背景与基本假设"></a>问题背景与基本假设</h2><p>EKF 用于<strong>非线性动态系统</strong>的状态估计，假设噪声为高斯，通过局部线性化处理非线性。</p>
+<h2 id="数学模型与线性化"><a href="#数学模型与线性化" class="headerlink" title="数学模型与线性化"></a>数学模型与线性化</h2><h3 id="状态转移方程：-1"><a href="#状态转移方程：-1" class="headerlink" title="状态转移方程："></a>状态转移方程：</h3><script type="math/tex; mode=display">
+x_k = f(x_{k-1}, u_{k-1}, w_{k-1})</script><ul>
+<li>$ f(\cdot) $：<strong>非线性状态转移函数</strong>。</li>
+</ul>
+<h3 id="观测方程：-1"><a href="#观测方程：-1" class="headerlink" title="观测方程："></a>观测方程：</h3><script type="math/tex; mode=display">
+z_k = h(x_k, v_k)</script><ul>
+<li>$ h(\cdot) $：<strong>非线性观测函数</strong>。</li>
+</ul>
+<h3 id="线性化"><a href="#线性化" class="headerlink" title="线性化"></a>线性化</h3><ul>
+<li>状态转移函数在 $ \hat{x}_{k-1|k-1} $ 处：<script type="math/tex; mode=display">
+F_k = \frac{\partial f}{\partial x} \bigg|_{x = \hat{x}_{k-1|k-1}, u_{k-1}, w_{k-1}=0}</script></li>
+<li>观测函数在 $ \hat{x}_{k|k-1} $ 处：<script type="math/tex; mode=display">
+H_k = \frac{\partial h}{\partial x} \bigg|_{x = \hat{x}_{k|k-1}, v_k=0}</script></li>
+</ul>
+<h2 id="预测步骤（时间更新）-1"><a href="#预测步骤（时间更新）-1" class="headerlink" title="预测步骤（时间更新）"></a>预测步骤（时间更新）</h2><h3 id="状态预测-1"><a href="#状态预测-1" class="headerlink" title="状态预测"></a>状态预测</h3><p>根据非线性状态转移方程：</p>
+<script type="math/tex; mode=display">
+\hat{x}_{k|k-1} = f(\hat{x}_{k-1|k-1}, u_{k-1}, 0)</script><ul>
+<li>$ \hat{x}_{k|k-1} $ 是<strong>先验状态估计</strong>，直接用非线性函数 $ f $ 计算，假设噪声均值为零。<h3 id="协方差预测-1"><a href="#协方差预测-1" class="headerlink" title="协方差预测"></a>协方差预测</h3>定义<strong>先验误差</strong>：<script type="math/tex; mode=display">
+e_{k|k-1} = x_k - \hat{x}_{k|k-1}</script>使用一阶泰勒展开近似：<script type="math/tex; mode=display">
+x_k \approx f(\hat{x}_{k-1|k-1}, u_{k-1}, 0) + F_k (x_{k-1} - \hat{x}_{k-1|k-1}) + w_{k-1}</script><script type="math/tex; mode=display">
+e_{k|k-1} \approx F_k e_{k-1|k-1} + w_{k-1}</script><strong>先验协方差矩阵</strong>：<script type="math/tex; mode=display">
+P_{k|k-1} = E[e_{k|k-1} e_{k|k-1}^T] = F_k P_{k-1|k-1} F_k^T + Q</script></li>
+</ul>
+<h2 id="更新步骤（测量更新）-1"><a href="#更新步骤（测量更新）-1" class="headerlink" title="更新步骤（测量更新）"></a>更新步骤（测量更新）</h2><h3 id="观测残差-1"><a href="#观测残差-1" class="headerlink" title="观测残差"></a>观测残差</h3><script type="math/tex; mode=display">
+\tilde{y}_k = z_k - h(\hat{x}_{k|k-1}, 0)</script><p>线性化后：</p>
+<script type="math/tex; mode=display">
+\tilde{y}_k \approx H_k e_{k|k-1} + v_k</script><h3 id="创新协方差"><a href="#创新协方差" class="headerlink" title="创新协方差"></a>创新协方差</h3><script type="math/tex; mode=display">
+S_k = H_k P_{k|k-1} H_k^T + R</script><h3 id="卡尔曼增益-1"><a href="#卡尔曼增益-1" class="headerlink" title="卡尔曼增益"></a>卡尔曼增益</h3><script type="math/tex; mode=display">
+K_k = P_{k|k-1} H_k^T S_k^{-1}</script><h3 id="状态更新-1"><a href="#状态更新-1" class="headerlink" title="状态更新"></a>状态更新</h3><script type="math/tex; mode=display">
+\hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k \tilde{y}_k</script><h3 id="协方差更新-1"><a href="#协方差更新-1" class="headerlink" title="协方差更新"></a>协方差更新</h3><script type="math/tex; mode=display">
+P_{k|k} = (I - K_k H_k) P_{k|k-1}</script><h2 id="完整算法流程-1"><a href="#完整算法流程-1" class="headerlink" title="完整算法流程"></a>完整算法流程</h2><p><strong>初始化</strong>：</p>
+<ul>
+<li>$ \hat{x}_{0|0} $，$ P_{0|0} $</li>
+</ul>
+<p><strong>对于每个时刻 $ k = 1, 2, \dots $</strong>：</p>
+<ol>
+<li><strong>预测</strong>：<ul>
+<li>$ \hat{x}_{k|k-1} = f(\hat{x}_{k-1|k-1}, u_{k-1}, 0) $</li>
+<li>$ F_k = \frac{\partial f}{\partial x} \bigg|_{x = \hat{x}_{k-1|k-1}, u_{k-1}, w_{k-1}=0} $</li>
+<li>$ P_{k|k-1} = F_k P_{k-1|k-1} F_k^T + Q $</li>
+</ul>
+</li>
+<li><strong>更新</strong>：<ul>
+<li>$ \tilde{y}_k = z_k - h(\hat{x}_{k|k-1}, 0) $</li>
+<li>$ H_k = \frac{\partial h}{\partial x} \bigg|_{x = \hat{x}_{k|k-1}, v_k=0} $</li>
+<li>$ S_k = H_k P_{k|k-1} H_k^T + R $</li>
+<li>$ K_k = P_{k|k-1} H_k^T S_k^{-1} $</li>
+<li>$ \hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k \tilde{y}_k $</li>
+<li>$ P_{k|k} = (I - K_k H_k) P_{k|k-1} $</li>
+</ul>
+</li>
+</ol>
+<h2 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h2><p>EKF 通过线性化处理非线性，适用于<strong>弱非线性系统</strong>，但强非线性时线性化误差可能影响精度。</p>
+<hr>
+<h1 id="无迹卡尔曼滤波（UKF）"><a href="#无迹卡尔曼滤波（UKF）" class="headerlink" title="无迹卡尔曼滤波（UKF）"></a>无迹卡尔曼滤波（UKF）</h1><h2 id="问题背景与基本假设-2"><a href="#问题背景与基本假设-2" class="headerlink" title="问题背景与基本假设"></a>问题背景与基本假设</h2><p>UKF 用于<strong>非线性动态系统</strong>，通过无迹变换捕捉非线性特性，避免线性化误差。假设噪声为高斯。</p>
+<h2 id="数学模型与无迹变换"><a href="#数学模型与无迹变换" class="headerlink" title="数学模型与无迹变换"></a>数学模型与无迹变换</h2><h3 id="状态转移方程：-2"><a href="#状态转移方程：-2" class="headerlink" title="状态转移方程："></a>状态转移方程：</h3><script type="math/tex; mode=display">
+x_k = f(x_{k-1}, u_{k-1}, w_{k-1})</script><h3 id="观测方程：-2"><a href="#观测方程：-2" class="headerlink" title="观测方程："></a>观测方程：</h3><script type="math/tex; mode=display">
+z_k = h(x_k, v_k)</script><h3 id="无迹变换"><a href="#无迹变换" class="headerlink" title="无迹变换"></a>无迹变换</h3><p>无迹变换通过一组精心选择的采样点（Sigma 点）传播非线性函数：</p>
+<ul>
+<li>对于 $ n $ 维状态向量 $ x \sim N(\hat{x}, P) $，生成 $ 2n + 1 $ 个 Sigma 点。</li>
+<li>将这些点通过非线性函数 $ f $ 或 $ h $ 传播，计算变换后的均值和协方差。</li>
+<li>参数：<ul>
+<li>$ \lambda = \alpha^2 (n + \kappa) - n $：缩放参数。</li>
+<li>$ \alpha $：控制 Sigma 点分布范围（通常取 $ 10^{-3} \sim 1 $）。</li>
+<li>$ \kappa $：次要缩放参数（通常取 0 或 $ 3 - n $）。</li>
+<li>$ \beta $：融入高阶信息（对于高斯分布，$ \beta = 2 $ 最优）。</li>
+</ul>
+</li>
+</ul>
+<p>UKF 的步骤分为预测和更新两部分，使用 Sigma 点传播非线性。</p>
+<h2 id="预测步骤（时间更新）-2"><a href="#预测步骤（时间更新）-2" class="headerlink" title="预测步骤（时间更新）"></a>预测步骤（时间更新）</h2><h3 id="生成-Sigma-点"><a href="#生成-Sigma-点" class="headerlink" title="生成 Sigma 点"></a>生成 Sigma 点</h3><p>基于上一时刻的后验估计 $ \hat{x}_{k-1|k-1} $ 和 $ P_{k-1|k-1} $：</p>
+<script type="math/tex; mode=display">
+\mathcal{X}_{k-1|k-1}^{(0)} = \hat{x}_{k-1|k-1}</script><script type="math/tex; mode=display">
+\mathcal{X}_{k-1|k-1}^{(i)} = \hat{x}_{k-1|k-1} + (\sqrt{(n + \lambda) P_{k-1|k-1}})_i, \quad i = 1, \dots, n</script><script type="math/tex; mode=display">
+\mathcal{X}_{k-1|k-1}^{(i)} = \hat{x}_{k-1|k-1} - (\sqrt{(n + \lambda) P_{k-1|k-1}})_{i-n}, \quad i = n+1, \dots, 2n</script><ul>
+<li>$ \lambda = \alpha^2 (n + \kappa) - n $。</li>
+<li>$ (\sqrt{(n + \lambda) P_{k-1|k-1}})_i $ 是矩阵平方根（如 Cholesky 分解）的第 $ i $ 列。</li>
+</ul>
+<h3 id="状态预测-2"><a href="#状态预测-2" class="headerlink" title="状态预测"></a>状态预测</h3><p>将 Sigma 点通过状态转移函数传播：</p>
+<script type="math/tex; mode=display">
+\mathcal{X}_{k|k-1}^{(i)} = f(\mathcal{X}_{k-1|k-1}^{(i)}, u_{k-1}, 0)</script><p>加权平均计算先验状态估计：</p>
+<script type="math/tex; mode=display">
+\hat{x}_{k|k-1} = \sum_{i=0}^{2n} W_m^{(i)} \mathcal{X}_{k|k-1}^{(i)}</script><p>权重：</p>
+<script type="math/tex; mode=display">
+W_m^{(0)} = \frac{\lambda}{n + \lambda}, \quad W_m^{(i)} = \frac{1}{2(n + \lambda)}, \quad i = 1, \dots, 2n</script><h3 id="协方差预测-2"><a href="#协方差预测-2" class="headerlink" title="协方差预测"></a>协方差预测</h3><p>计算先验协方差：</p>
+<script type="math/tex; mode=display">
+P_{k|k-1} = \sum_{i=0}^{2n} W_c^{(i)} (\mathcal{X}_{k|k-1}^{(i)} - \hat{x}_{k|k-1})(\mathcal{X}_{k|k-1}^{(i)} - \hat{x}_{k|k-1})^T + Q</script><p>权重：</p>
+<script type="math/tex; mode=display">
+W_c^{(0)} = \frac{\lambda}{n + \lambda} + (1 - \alpha^2 + \beta), \quad W_c^{(i)} = \frac{1}{2(n + \lambda)}, \quad i = 1, \dots, 2n</script><h2 id="更新步骤（测量更新）-2"><a href="#更新步骤（测量更新）-2" class="headerlink" title="更新步骤（测量更新）"></a>更新步骤（测量更新）</h2><h3 id="观测预测"><a href="#观测预测" class="headerlink" title="观测预测"></a>观测预测</h3><p>将 Sigma 点通过观测函数传播：</p>
+<script type="math/tex; mode=display">
+\mathcal{Z}_{k|k-1}^{(i)} = h(\mathcal{X}_{k|k-1}^{(i)}, 0), \quad i = 0, \dots, 2n</script><p>预测观测均值：</p>
+<script type="math/tex; mode=display">
+\hat{z}_{k|k-1} = \sum_{i=0}^{2n} W_m^{(i)} \mathcal{Z}_{k|k-1}^{(i)}</script><h3 id="创新协方差与交叉协方差"><a href="#创新协方差与交叉协方差" class="headerlink" title="创新协方差与交叉协方差"></a>创新协方差与交叉协方差</h3><p><strong>创新协方差</strong>：</p>
+<script type="math/tex; mode=display">
+S_k = \sum_{i=0}^{2n} W_c^{(i)} (\mathcal{Z}_{k|k-1}^{(i)} - \hat{z}_{k|k-1})(\mathcal{Z}_{k|k-1}^{(i)} - \hat{z}_{k|k-1})^T + R</script><p><strong>状态-观测交叉协方差</strong>：</p>
+<script type="math/tex; mode=display">
+P_{xz,k} = \sum_{i=0}^{2n} W_c^{(i)} (\mathcal{X}_{k|k-1}^{(i)} - \hat{x}_{k|k-1})(\mathcal{Z}_{k|k-1}^{(i)} - \hat{z}_{k|k-1})^T</script><h3 id="卡尔曼增益-2"><a href="#卡尔曼增益-2" class="headerlink" title="卡尔曼增益"></a>卡尔曼增益</h3><script type="math/tex; mode=display">
+K_k = P_{xz,k} S_k^{-1}</script><h3 id="状态更新-2"><a href="#状态更新-2" class="headerlink" title="状态更新"></a>状态更新</h3><p>观测残差：</p>
+<script type="math/tex; mode=display">
+\tilde{y}_k = z_k - \hat{z}_{k|k-1}</script><p>后验状态估计：</p>
+<script type="math/tex; mode=display">
+\hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k \tilde{y}_k</script><h3 id="协方差更新-2"><a href="#协方差更新-2" class="headerlink" title="协方差更新"></a>协方差更新</h3><script type="math/tex; mode=display">
+P_{k|k} = P_{k|k-1} - K_k S_k K_k^T</script><h2 id="完整算法流程-2"><a href="#完整算法流程-2" class="headerlink" title="完整算法流程"></a>完整算法流程</h2><p><strong>初始化</strong>：</p>
+<ul>
+<li>初始状态估计：$ \hat{x}_{0|0} $</li>
+<li>初始协方差矩阵：$ P_{0|0} $</li>
+</ul>
+<p>对于每个时刻 $ k = 1, 2, \dots $：</p>
+<ol>
+<li><strong>预测</strong>：<ul>
+<li>生成 Sigma 点：$ \mathcal{X}_{k-1|k-1}^{(i)} $</li>
+<li>$ \mathcal{X}_{k|k-1}^{(i)} = f(\mathcal{X}_{k-1|k-1}^{(i)}, u_{k-1}, 0) $</li>
+<li>$ \hat{x}_{k|k-1} = \sum_{i=0}^{2n} W_m^{(i)} \mathcal{X}_{k|k-1}^{(i)} $</li>
+<li>$ P_{k|k-1} = \sum_{i=0}^{2n} W_c^{(i)} (\mathcal{X}_{k|k-1}^{(i)} - \hat{x}_{k|k-1})(\mathcal{X}_{k|k-1}^{(i)} - \hat{x}_{k|k-1})^T + Q $</li>
+</ul>
+</li>
+<li><strong>更新</strong>：<ul>
+<li>$ \mathcal{Z}_{k|k-1}^{(i)} = h(\mathcal{X}_{k|k-1}^{(i)}, 0) $</li>
+<li>$ \hat{z}_{k|k-1} = \sum_{i=0}^{2n} W_m^{(i)} \mathcal{Z}_{k|k-1}^{(i)} $</li>
+<li>$ S_k = \sum_{i=0}^{2n} W_c^{(i)} (\mathcal{Z}_{k|k-1}^{(i)} - \hat{z}_{k|k-1})(\mathcal{Z}_{k|k-1}^{(i)} - \hat{z}_{k|k-1})^T + R $</li>
+<li>$ P_{xz,k} = \sum_{i=0}^{2n} W_c^{(i)} (\mathcal{X}_{k|k-1}^{(i)} - \hat{x}_{k|k-1})(\mathcal{Z}_{k|k-1}^{(i)} - \hat{z}_{k|k-1})^T $</li>
+<li>$ K_k = P_{xz,k} S_k^{-1} $</li>
+<li>$ \hat{x}_{k|k} = \hat{x}_{k|k-1} + K_k (z_k - \hat{z}_{k|k-1}) $</li>
+<li>$ P_{k|k} = P_{k|k-1} - K_k S_k K_k^T $<h2 id="总结-2"><a href="#总结-2" class="headerlink" title="总结"></a>总结</h2></li>
+</ul>
+</li>
+</ol>
+<p>UKF 通过无迹变换处理非线性，精度高于 EKF，适用于<strong>强非线性系统</strong>，但计算复杂度较高。</p>
+<hr>
+<h1 id="三种滤波器的对比"><a href="#三种滤波器的对比" class="headerlink" title="三种滤波器的对比"></a>三种滤波器的对比</h1><div class="table-container">
+<table>
+<thead>
+<tr>
+<th><strong>滤波器</strong></th>
+<th><strong>适用系统</strong></th>
+<th><strong>方法</strong></th>
+<th><strong>优点</strong></th>
+<th><strong>缺点</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>KF</strong></td>
+<td>线性高斯系统</td>
+<td>线性代数</td>
+<td>计算高效、最优</td>
+<td>不适用于非线性系统</td>
+</tr>
+<tr>
+<td><strong>EKF</strong></td>
+<td>弱非线性系统</td>
+<td>线性化（雅可比）</td>
+<td>扩展到非线性、计算较快</td>
+<td>线性化误差、需计算导数</td>
+</tr>
+<tr>
+<td><strong>UKF</strong></td>
+<td>强非线性系统</td>
+<td>无迹变换</td>
+<td>精度高、无需导数</td>
+<td>计算复杂度高</td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>选择滤波器时需根据系统特性权衡精度和计算成本。</p>
+<hr>
+
+        </div>
+        <footer class="article-footer">
+            
+
+
+
+    <a data-url="http://example.com/2025/03/25/Kalman-filtering/" data-id="cm94d7fn20000wcv56zi97w8j" class="article-share-link"><i class="fa fa-share"></i>分享到</a>
+<script>
+    (function ($) {
+        $('body').on('click', function() {
+            $('.article-share-box.on').removeClass('on');
+        }).on('click', '.article-share-link', function(e) {
+            e.stopPropagation();
+
+            var $this = $(this),
+                url = $this.attr('data-url'),
+                encodedUrl = encodeURIComponent(url),
+                id = 'article-share-box-' + $this.attr('data-id'),
+                offset = $this.offset(),
+                box;
+
+            if ($('#' + id).length) {
+                box = $('#' + id);
+
+                if (box.hasClass('on')){
+                    box.removeClass('on');
+                    return;
+                }
+            } else {
+                var html = [
+                    '<div id="' + id + '" class="article-share-box">',
+                        '<input class="article-share-input" value="' + url + '">',
+                        '<div class="article-share-links">',
+                            '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+                            '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+                            '<a href="http://pinterest.com/pin/create/button/?url=' + encodedUrl + '" class="article-share-pinterest" target="_blank" title="Pinterest"></a>',
+                            '<a href="https://plus.google.com/share?url=' + encodedUrl + '" class="article-share-google" target="_blank" title="Google+"></a>',
+                        '</div>',
+                    '</div>'
+                ].join('');
+
+              box = $(html);
+
+              $('body').append(box);
+            }
+
+            $('.article-share-box.on').hide();
+
+            box.css({
+                top: offset.top + 25,
+                left: offset.left
+            }).addClass('on');
+
+        }).on('click', '.article-share-box', function (e) {
+            e.stopPropagation();
+        }).on('click', '.article-share-box-input', function () {
+            $(this).select();
+        }).on('click', '.article-share-box-link', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            window.open(this.href, 'article-share-box-window-' + Date.now(), 'width=500,height=450');
+        });
+    })(jQuery);
+</script>
+
+        </footer>
+    </div>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "author": {
+            "@type": "Person",
+            "name": "Vapor"
+        },
+        "headline": "卡尔曼滤波及其扩展",
+        "image": "http://example.comhttps://vaporfigurebed.oss-cn-beijing.aliyuncs.com/blogimg/e1666d3d112f034387870584730004b.png",
+        "keywords": "算法",
+        "genre": "学习",
+        "datePublished": "2025-03-25",
+        "dateCreated": "2025-03-25",
+        "dateModified": "2025-04-21",
+        "url": "http://example.com/2025/03/25/Kalman-filtering/",
+        "description": "
+卡尔曼滤波（Kalman Filter, KF）及其扩展版本——扩展卡尔曼滤波（Extended Kalman Filter, EKF）和无迹卡尔曼滤波（Unscented Kalman Filter, UKF）——是用于动态系统状态估计的经典方法。本笔记将详细介绍这三种滤波器的原理、数学推导和算法流程。",
+        "wordCount": 2318
+    }
+</script>
+
+</article>
+
+    <section id="comments">
+    
+    </section>
+
+
+
+                        </div>
+                    </section>
+                    <aside id="sidebar">
+    <a class="sidebar-toggle" title="Expand Sidebar"><i class="toggle icon"></i></a>
+    <div class="sidebar-top">
+        
+        
+        <p>十点准时下班！</p>
+        <ul class="social-links">
+            
+        </ul>
+    </div>
+    
+        
+<nav id="article-nav">
+    
+    
+        <a href="/2023/10/14/Mariage-Damour/" id="article-nav-older" class="article-nav-link-wrap">
+        <strong class="article-nav-caption">上一篇</strong>
+        <p class="article-nav-title">梦中的婚礼</p>
+        <i class="icon fa fa-chevron-left" id="icon-chevron-left"></i>
+        </a>
+    
+</nav>
+
+    
+    <div class="widgets-container">
+        
+            
+                
+<div class="widget-wrap widget-list">
+    <h3 class="widget-title">目录</h3>
+    <div class="widget">
+        <div id="toc" class="toc-article">
+            <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E5%8D%A1%E5%B0%94%E6%9B%BC%E6%BB%A4%E6%B3%A2%EF%BC%88KF%EF%BC%89"><span class="toc-number">1.</span> <span class="toc-text">基本卡尔曼滤波（KF）</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF%E4%B8%8E%E5%9F%BA%E6%9C%AC%E5%81%87%E8%AE%BE"><span class="toc-number">1.1.</span> <span class="toc-text">问题背景与基本假设</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E8%BD%AC%E7%A7%BB%E6%96%B9%E7%A8%8B%EF%BC%9A"><span class="toc-number">1.1.1.</span> <span class="toc-text">状态转移方程：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%82%E6%B5%8B%E6%96%B9%E7%A8%8B%EF%BC%9A"><span class="toc-number">1.1.2.</span> <span class="toc-text">观测方程：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A6%82%E7%8E%87%E6%A1%86%E6%9E%B6%E4%B8%8E%E8%B4%9D%E5%8F%B6%E6%96%AF%E4%BC%B0%E8%AE%A1"><span class="toc-number">1.2.</span> <span class="toc-text">概率框架与贝叶斯估计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B4%9D%E5%8F%B6%E6%96%AF%E5%AE%9A%E7%90%86%EF%BC%88Bayes%E2%80%99-Theorem%EF%BC%89"><span class="toc-number">1.2.1.</span> <span class="toc-text">贝叶斯定理（Bayes’ Theorem）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B4%9D%E5%8F%B6%E6%96%AF%E4%BC%B0%E8%AE%A1%E5%9C%A8%E5%8D%A1%E5%B0%94%E6%9B%BC%E6%BB%A4%E6%B3%A2%E4%B8%AD%E7%9A%84%E5%BA%94%E7%94%A8"><span class="toc-number">1.2.2.</span> <span class="toc-text">贝叶斯估计在卡尔曼滤波中的应用</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%88%E9%AA%8C%E6%A6%82%E7%8E%87-p-x-k-z-1-k-1"><span class="toc-number">1.2.2.1.</span> <span class="toc-text">先验概率 $p(x_k | z_{1:k-1})$</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%BC%E7%84%B6%E6%A6%82%E7%8E%87-p-z-k-x-k"><span class="toc-number">1.2.2.2.</span> <span class="toc-text">似然概率 $p(z_k | x_k)$</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BD%92%E4%B8%80%E5%8C%96%E5%B8%B8%E6%95%B0-p-z-k-z-1-k-1"><span class="toc-number">1.2.2.3.</span> <span class="toc-text">归一化常数 $p(z_k | z_{1:k-1})$</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%8E%E9%AA%8C%E6%A6%82%E7%8E%87-p-x-k-z-1-k"><span class="toc-number">1.2.2.4.</span> <span class="toc-text">后验概率 $p(x_k | z_{1:k})$</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A2%84%E6%B5%8B%E6%AD%A5%E9%AA%A4%EF%BC%88%E6%97%B6%E9%97%B4%E6%9B%B4%E6%96%B0%EF%BC%89"><span class="toc-number">1.3.</span> <span class="toc-text">预测步骤（时间更新）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E9%A2%84%E6%B5%8B"><span class="toc-number">1.3.1.</span> <span class="toc-text">状态预测</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%8F%E6%96%B9%E5%B7%AE%E9%A2%84%E6%B5%8B"><span class="toc-number">1.3.2.</span> <span class="toc-text">协方差预测</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0%E6%AD%A5%E9%AA%A4%EF%BC%88%E6%B5%8B%E9%87%8F%E6%9B%B4%E6%96%B0%EF%BC%89"><span class="toc-number">1.4.</span> <span class="toc-text">更新步骤（测量更新）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%82%E6%B5%8B%E6%AE%8B%E5%B7%AE"><span class="toc-number">1.4.1.</span> <span class="toc-text">观测残差</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%A1%E5%B0%94%E6%9B%BC%E5%A2%9E%E7%9B%8A"><span class="toc-number">1.4.2.</span> <span class="toc-text">卡尔曼增益</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E6%9B%B4%E6%96%B0"><span class="toc-number">1.4.3.</span> <span class="toc-text">状态更新</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%8F%E6%96%B9%E5%B7%AE%E6%9B%B4%E6%96%B0"><span class="toc-number">1.4.4.</span> <span class="toc-text">协方差更新</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%8C%E6%95%B4%E7%AE%97%E6%B3%95%E6%B5%81%E7%A8%8B"><span class="toc-number">1.5.</span> <span class="toc-text">完整算法流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%BA%E5%8C%96%E7%90%86%E8%A7%A3"><span class="toc-number">1.6.</span> <span class="toc-text">强化理解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A2%84%E6%B5%8B"><span class="toc-number">1.6.1.</span> <span class="toc-text">预测</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0"><span class="toc-number">1.6.2.</span> <span class="toc-text">更新</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">1.7.</span> <span class="toc-text">总结</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%89%A9%E5%B1%95%E5%8D%A1%E5%B0%94%E6%9B%BC%E6%BB%A4%E6%B3%A2%EF%BC%88EKF%EF%BC%89"><span class="toc-number">2.</span> <span class="toc-text">扩展卡尔曼滤波（EKF）</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF%E4%B8%8E%E5%9F%BA%E6%9C%AC%E5%81%87%E8%AE%BE-1"><span class="toc-number">2.1.</span> <span class="toc-text">问题背景与基本假设</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E5%AD%A6%E6%A8%A1%E5%9E%8B%E4%B8%8E%E7%BA%BF%E6%80%A7%E5%8C%96"><span class="toc-number">2.2.</span> <span class="toc-text">数学模型与线性化</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E8%BD%AC%E7%A7%BB%E6%96%B9%E7%A8%8B%EF%BC%9A-1"><span class="toc-number">2.2.1.</span> <span class="toc-text">状态转移方程：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%82%E6%B5%8B%E6%96%B9%E7%A8%8B%EF%BC%9A-1"><span class="toc-number">2.2.2.</span> <span class="toc-text">观测方程：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BA%BF%E6%80%A7%E5%8C%96"><span class="toc-number">2.2.3.</span> <span class="toc-text">线性化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A2%84%E6%B5%8B%E6%AD%A5%E9%AA%A4%EF%BC%88%E6%97%B6%E9%97%B4%E6%9B%B4%E6%96%B0%EF%BC%89-1"><span class="toc-number">2.3.</span> <span class="toc-text">预测步骤（时间更新）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E9%A2%84%E6%B5%8B-1"><span class="toc-number">2.3.1.</span> <span class="toc-text">状态预测</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%8F%E6%96%B9%E5%B7%AE%E9%A2%84%E6%B5%8B-1"><span class="toc-number">2.3.2.</span> <span class="toc-text">协方差预测</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0%E6%AD%A5%E9%AA%A4%EF%BC%88%E6%B5%8B%E9%87%8F%E6%9B%B4%E6%96%B0%EF%BC%89-1"><span class="toc-number">2.4.</span> <span class="toc-text">更新步骤（测量更新）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%82%E6%B5%8B%E6%AE%8B%E5%B7%AE-1"><span class="toc-number">2.4.1.</span> <span class="toc-text">观测残差</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E6%96%B0%E5%8D%8F%E6%96%B9%E5%B7%AE"><span class="toc-number">2.4.2.</span> <span class="toc-text">创新协方差</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%A1%E5%B0%94%E6%9B%BC%E5%A2%9E%E7%9B%8A-1"><span class="toc-number">2.4.3.</span> <span class="toc-text">卡尔曼增益</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E6%9B%B4%E6%96%B0-1"><span class="toc-number">2.4.4.</span> <span class="toc-text">状态更新</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%8F%E6%96%B9%E5%B7%AE%E6%9B%B4%E6%96%B0-1"><span class="toc-number">2.4.5.</span> <span class="toc-text">协方差更新</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%8C%E6%95%B4%E7%AE%97%E6%B3%95%E6%B5%81%E7%A8%8B-1"><span class="toc-number">2.5.</span> <span class="toc-text">完整算法流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93-1"><span class="toc-number">2.6.</span> <span class="toc-text">总结</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%97%A0%E8%BF%B9%E5%8D%A1%E5%B0%94%E6%9B%BC%E6%BB%A4%E6%B3%A2%EF%BC%88UKF%EF%BC%89"><span class="toc-number">3.</span> <span class="toc-text">无迹卡尔曼滤波（UKF）</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF%E4%B8%8E%E5%9F%BA%E6%9C%AC%E5%81%87%E8%AE%BE-2"><span class="toc-number">3.1.</span> <span class="toc-text">问题背景与基本假设</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E5%AD%A6%E6%A8%A1%E5%9E%8B%E4%B8%8E%E6%97%A0%E8%BF%B9%E5%8F%98%E6%8D%A2"><span class="toc-number">3.2.</span> <span class="toc-text">数学模型与无迹变换</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E8%BD%AC%E7%A7%BB%E6%96%B9%E7%A8%8B%EF%BC%9A-2"><span class="toc-number">3.2.1.</span> <span class="toc-text">状态转移方程：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%82%E6%B5%8B%E6%96%B9%E7%A8%8B%EF%BC%9A-2"><span class="toc-number">3.2.2.</span> <span class="toc-text">观测方程：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%A0%E8%BF%B9%E5%8F%98%E6%8D%A2"><span class="toc-number">3.2.3.</span> <span class="toc-text">无迹变换</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A2%84%E6%B5%8B%E6%AD%A5%E9%AA%A4%EF%BC%88%E6%97%B6%E9%97%B4%E6%9B%B4%E6%96%B0%EF%BC%89-2"><span class="toc-number">3.3.</span> <span class="toc-text">预测步骤（时间更新）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%9F%E6%88%90-Sigma-%E7%82%B9"><span class="toc-number">3.3.1.</span> <span class="toc-text">生成 Sigma 点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E9%A2%84%E6%B5%8B-2"><span class="toc-number">3.3.2.</span> <span class="toc-text">状态预测</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%8F%E6%96%B9%E5%B7%AE%E9%A2%84%E6%B5%8B-2"><span class="toc-number">3.3.3.</span> <span class="toc-text">协方差预测</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9B%B4%E6%96%B0%E6%AD%A5%E9%AA%A4%EF%BC%88%E6%B5%8B%E9%87%8F%E6%9B%B4%E6%96%B0%EF%BC%89-2"><span class="toc-number">3.4.</span> <span class="toc-text">更新步骤（测量更新）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%82%E6%B5%8B%E9%A2%84%E6%B5%8B"><span class="toc-number">3.4.1.</span> <span class="toc-text">观测预测</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E6%96%B0%E5%8D%8F%E6%96%B9%E5%B7%AE%E4%B8%8E%E4%BA%A4%E5%8F%89%E5%8D%8F%E6%96%B9%E5%B7%AE"><span class="toc-number">3.4.2.</span> <span class="toc-text">创新协方差与交叉协方差</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%A1%E5%B0%94%E6%9B%BC%E5%A2%9E%E7%9B%8A-2"><span class="toc-number">3.4.3.</span> <span class="toc-text">卡尔曼增益</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E6%9B%B4%E6%96%B0-2"><span class="toc-number">3.4.4.</span> <span class="toc-text">状态更新</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%8F%E6%96%B9%E5%B7%AE%E6%9B%B4%E6%96%B0-2"><span class="toc-number">3.4.5.</span> <span class="toc-text">协方差更新</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%8C%E6%95%B4%E7%AE%97%E6%B3%95%E6%B5%81%E7%A8%8B-2"><span class="toc-number">3.5.</span> <span class="toc-text">完整算法流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93-2"><span class="toc-number">3.6.</span> <span class="toc-text">总结</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%89%E7%A7%8D%E6%BB%A4%E6%B3%A2%E5%99%A8%E7%9A%84%E5%AF%B9%E6%AF%94"><span class="toc-number">4.</span> <span class="toc-text">三种滤波器的对比</span></a></li></ol>
+        </div>
+    </div>
+</div>
+
+
+            
+                
+    <div class="widget-wrap">
+        <h3 class="widget-title">最新文章</h3>
+        <div class="widget">
+            <ul id="recent-post" class="">
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2025/03/25/Kalman-filtering/" class="thumbnail">
+    
+    
+        <span style="background-image:url(https://vaporfigurebed.oss-cn-beijing.aliyuncs.com/blogimg/e1666d3d112f034387870584730004b.png)" alt="卡尔曼滤波及其扩展" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/%E5%AD%A6%E4%B9%A0/">学习</a></p>
+                            <p class="item-title"><a href="/2025/03/25/Kalman-filtering/" class="title">卡尔曼滤波及其扩展</a></p>
+                            <p class="item-date"><time datetime="2025-03-25T15:00:11.000Z" itemprop="datePublished">2025-03-25</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2023/10/14/Mariage-Damour/" class="thumbnail">
+    
+    
+        <span style="background-image:url(https://vaporfigurebed.oss-cn-beijing.aliyuncs.com//blogimg/84dfea11720a0aa859b3895998e4592.png)" alt="梦中的婚礼" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/%E7%94%9F%E6%B4%BB/">生活</a></p>
+                            <p class="item-title"><a href="/2023/10/14/Mariage-Damour/" class="title">梦中的婚礼</a></p>
+                            <p class="item-date"><time datetime="2023-10-14T11:39:16.000Z" itemprop="datePublished">2023-10-14</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2023/09/25/cinema-technology/" class="thumbnail">
+    
+    
+        <span style="background-image:url(https://vaporfigurebed.oss-cn-beijing.aliyuncs.com//blogimg/the-dark-knight-rises-christopher-nolan-image1-1300x750.jpg)" alt="影院相关技术简析" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/%E7%94%9F%E6%B4%BB/">生活</a></p>
+                            <p class="item-title"><a href="/2023/09/25/cinema-technology/" class="title">影院相关技术简析</a></p>
+                            <p class="item-date"><time datetime="2023-09-25T03:00:11.000Z" itemprop="datePublished">2023-09-25</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2023/09/24/daniels%E2%80%98-running-formula/" class="thumbnail">
+    
+    
+        <span style="background-image:url(https://vaporfigurebed.oss-cn-beijing.aliyuncs.com//blogimg/running/训练封面.jpg)" alt="基于丹尼尔斯跑步公式的训练知识" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/%E7%94%9F%E6%B4%BB/">生活</a></p>
+                            <p class="item-title"><a href="/2023/09/24/daniels%E2%80%98-running-formula/" class="title">基于丹尼尔斯跑步公式的训练知识</a></p>
+                            <p class="item-date"><time datetime="2023-09-24T09:50:22.000Z" itemprop="datePublished">2023-09-24</time></p>
+                        </div>
+                    </li>
+                
+                    <li>
+                        
+                        <div class="item-thumbnail">
+                            <a href="/2023/09/06/building-blog-note/" class="thumbnail">
+    
+    
+        <span style="background-image:url(https://vaporfigurebed.oss-cn-beijing.aliyuncs.com//blogimg/catH.png)" alt="基于Github的Hexo博客搭建" class="thumbnail-image"></span>
+    
+    
+</a>
+
+                        </div>
+                        
+                        <div class="item-inner">
+                            <p class="item-category"><a class="article-category-link" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a></p>
+                            <p class="item-title"><a href="/2023/09/06/building-blog-note/" class="title">基于Github的Hexo博客搭建</a></p>
+                            <p class="item-date"><time datetime="2023-09-06T12:00:32.000Z" itemprop="datePublished">2023-09-06</time></p>
+                        </div>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">分类</h3>
+        <div class="widget">
+            <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/%E5%AD%A6%E4%B9%A0/">学习</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%94%9F%E6%B4%BB/">生活</a><span class="category-list-count">3</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">归档</h3>
+        <div class="widget">
+            <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2025/03/">三月 2025</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/10/">十月 2023</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/09/">九月 2023</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/05/">五月 2023</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2023/04/">四月 2023</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/11/">十一月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/08/">八月 2022</a><span class="archive-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">标签</h3>
+        <div class="widget">
+            <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" rel="tag">博客搭建</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%99%BA%E8%83%BD%E8%AE%BE%E8%AE%A1/" rel="tag">智能设计</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%94%B5%E5%BD%B1/" rel="tag">电影</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%8B%B1%E8%AF%AD/" rel="tag">英语</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%B7%91%E6%AD%A5/" rel="tag">跑步</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%92%A2%E7%90%B4/" rel="tag">钢琴</a><span class="tag-list-count">1</span></li></ul>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-float">
+        <h3 class="widget-title">标签云</h3>
+        <div class="widget tagcloud">
+            <a href="/tags/%E5%8D%9A%E5%AE%A2%E6%90%AD%E5%BB%BA/" style="font-size: 10px;">博客搭建</a> <a href="/tags/%E6%99%BA%E8%83%BD%E8%AE%BE%E8%AE%A1/" style="font-size: 20px;">智能设计</a> <a href="/tags/%E7%94%B5%E5%BD%B1/" style="font-size: 10px;">电影</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 10px;">算法</a> <a href="/tags/%E8%8B%B1%E8%AF%AD/" style="font-size: 10px;">英语</a> <a href="/tags/%E8%B7%91%E6%AD%A5/" style="font-size: 10px;">跑步</a> <a href="/tags/%E9%92%A2%E7%90%B4/" style="font-size: 10px;">钢琴</a>
+        </div>
+    </div>
+
+
+            
+                
+    <div class="widget-wrap widget-list">
+        <h3 class="widget-title">链接</h3>
+        <div class="widget">
+            <ul>
+                
+                    <li>
+                        <a target="_blank" rel="noopener" href="http://hexo.io">Hexo</a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+
+
+            
+        
+    </div>
+</aside>
+
+                </div>
+            </div>
+        </div>
+        <footer id="footer">
+    <div class="container">
+        <div class="container-inner">
+            <a id="back-to-top" href="javascript:;"><i class="icon fa fa-angle-up"></i></a>
+            <div class="credit">
+                <h1 class="logo-wrap">
+                    <a href="/" class="logo"></a>
+                </h1>
+                <p>&copy; 2025 Vapor</p>
+                
+            </div>
+            <div class="footer-plugins">
+              
+    
+
+
+            </div>
+        </div>
+    </div>
+</footer>
+
+    </div>
+    
+
+
+    
+        
+<script src="/libs/lightgallery/js/lightgallery.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-thumbnail.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-pager.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-autoplay.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-fullscreen.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-zoom.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-hash.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-share.min.js"></script>
+
+        
+<script src="/libs/lightgallery/js/lg-video.min.js"></script>
+
+    
+    
+        
+<script src="/libs/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+    
+    
+        <script type="text/x-mathjax-config">
+            MathJax.Hub.Config({ tex2jax: { inlineMath: [['$','$'], ['\\(','\\)']] } });
+        </script>
+        
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML.js"></script>
+
+    
+
+    
+    
+    
+
+
+
+<!-- Custom Scripts -->
+
+<script src="/js/main.js"></script>
+
+
+</body>
+</html>
